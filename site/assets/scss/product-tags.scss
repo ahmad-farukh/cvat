@@ -1,0 +1,62 @@
+.product-tags-box {
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    color: #555;
+  }
+
+  .product-tags-label {
+    font-weight: 400;
+    color: #555;
+    margin-right: 6px;
+  }
+
+  .product-tag {
+    display: inline-block;
+    background: #f2f2f2;
+    color: #333;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin-left: 6px;
+    text-decoration: none !important;
+  }
+
+  .product-tag:hover {
+    background: #e6e6e6;
+  }
+
+  .product-tags-separator {
+    margin: 1.2rem 0 1.5rem;
+    border: none;
+    border-top: 1px solid #e3e3e3;
+  }
+
+  /* Inline variant, for a badge dropped inside a paragraph, list item,
+     or table cell (see shortcodes/product-badge.html) rather than the
+     whole-page box above. */
+  .product-tag-inline-group {
+    display: block;
+    margin-top: 4px;
+    white-space: nowrap;
+  }
+
+  /* When the badge is the only thing in its paragraph -- i.e. placed on
+     its own line right after a section heading, rather than inline in a
+     bullet or table cell -- give it normal block spacing (matching the
+     default paragraph margin) instead of the compact 4px used for the
+     inline cases. */
+  .td-content p > .product-tag-inline-group:only-child {
+    margin: 1rem 0;
+  }
+
+  .product-tag-inline {
+    margin-left: 4px;
+    margin-right: 0;
+    vertical-align: middle;
+  }
+
+  .product-tag-inline-label {
+    font-size: 0.85rem;
+    color: #555;
+    margin-right: 4px;
+  }

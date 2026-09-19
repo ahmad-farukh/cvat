@@ -1,0 +1,218 @@
+# Copyright (C) CVAT.ai Corporation
+#
+# SPDX-License-Identifier: MIT
+
+from enum import Enum
+
+from django.db import models
+from drf_spectacular.utils import extend_schema_serializer
+from rest_framework import serializers
+
+from cvat.apps.engine.models import Project
+from cvat.apps.engine.serializers import BasicUserSerializer, WriteOnceMixin
+
+from .event_type import AllEvents, EventKeyChoice, OrganizationEvents, ProjectEvents, ServerEvents
+from .models import Webhook, WebhookContentTypeChoice, WebhookDelivery, WebhookTypeChoice
+
+
+class AllWebhookTypeChoice(str, Enum):
+    ORGANIZATION = WebhookTypeChoice.ORGANIZATION.value
+    PROJECT = WebhookTypeChoice.PROJECT.value
+    SERVER = WebhookTypeChoice.SERVER.value
+    ALL = AllEvents.webhook_type
+
+    @classmethod
+    def choices(cls):
+        return tuple((x.value, x.name) for x in cls)
+
+    def __str__(self):
+        return self.value
+
+
+class EventKeysValidator:
+    requires_context = True
+
+    def get_webhook_type(self, attrs, serializer):
+        if serializer.instance is not None:
+            return serializer.instance.type
+        return attrs.get("type")
+
+    def __call__(self, attrs, serializer):
+        if attrs.get("events") is not None:
+            webhook_type = self.get_webhook_type(attrs, serializer)
+
+            match webhook_type:
+                case WebhookTypeChoice.PROJECT:
+                    allowed_events = ProjectEvents.events
+                case WebhookTypeChoice.ORGANIZATION:
+                    allowed_events = OrganizationEvents.events
+                case WebhookTypeChoice.SERVER:
+                    allowed_events = ServerEvents.events
+                case _:
+                    raise serializers.ValidationError(f"Unknown webhook type {webhook_type}")
+
+            events_keys = set(EventKeysField().to_representation(attrs["events"]))
+            if not events_keys.issubset({event.key for event in allowed_events}):
+                raise serializers.ValidationError(f"Invalid events list for {webhook_type} webhook")
+
+
+class EventKeysField(serializers.MultipleChoiceField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(choices=EventKeyChoice.choices(), *args, **kwargs)
+
+    def to_representation(self, value):
+        if isinstance(value, list):
+            return sorted(super().to_representation(value))
+
+        return sorted(list(super().to_representation(value.split(","))))
+
+    def to_internal_value(self, data):
+        return ",".join(super().to_internal_value(data))
+
+
+class EventGroupSerializer(serializers.Serializer):
+    display_name = serializers.CharField(read_only=True)
+
+
+@extend_schema_serializer(component_name="WebhooksEvent")
+class EventSerializer(serializers.Serializer):
+    key = serializers.CharField(read_only=True)
+    group = EventGroupSerializer(read_only=True)
+
+
+class EventsSerializer(serializers.Serializer):
+    webhook_type = serializers.ChoiceField(choices=AllWebhookTypeChoice.choices())
+    events = EventSerializer(many=True, read_only=True)
+
+
+class WebhookReadListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        if isinstance(data, list) and data:
+            # Optimized prefetch only for the current page
+            page: list[Webhook] = data
+
+            # Annotate page objects
+            # We do it explicitly here and not in the LIST queryset to avoid
+            # doing the same DB computations twice - one time for the page retrieval
+            # and another one for the COUNT(*) request to get the total count
+            last_delivery_ids = (
+                Webhook.objects.filter(id__in=[webhook.id for webhook in page])
+                .annotate(
+                    last_delivery_id=models.aggregates.Max("deliveries__id"),
+                )
+                .values_list("last_delivery_id", flat=True)
+            )
+            last_deliveries = WebhookDelivery.objects.filter(id__in=last_delivery_ids).defer(
+                "request", "response"  # potentially heavy fields
+            )
+            last_deliveries_by_webhook = {
+                delivery.webhook_id: delivery for delivery in last_deliveries
+            }
+            for webhook in page:
+                webhook.last_delivery = last_deliveries_by_webhook.get(webhook.id)
+
+        return super().to_representation(data)
+
+
+class WebhookReadSerializer(serializers.ModelSerializer):
+    owner = BasicUserSerializer(read_only=True, required=False, allow_null=True)
+
+    events = EventKeysField(read_only=True)
+
+    project_id = serializers.IntegerField(required=False, allow_null=True)
+    type = serializers.ChoiceField(choices=WebhookTypeChoice.choices())
+    content_type = serializers.ChoiceField(choices=WebhookContentTypeChoice.choices())
+
+    last_status = serializers.IntegerField(source="last_delivery.status_code", read_only=True)
+
+    last_delivery_date = serializers.DateTimeField(
+        source="last_delivery.updated_date", read_only=True
+    )
+
+    class Meta:
+        model = Webhook
+        fields = (
+            "id",
+            "url",
+            "target_url",
+            "description",
+            "type",
+            "content_type",
+            "is_active",
+            "enable_ssl",
+            "created_date",
+            "updated_date",
+            "owner",
+            "project_id",
+            "organization",
+            "events",
+            "last_status",
+            "last_delivery_date",
+        )
+        read_only_fields = fields
+        extra_kwargs = {
+            "organization": {"allow_null": True},
+        }
+        list_serializer_class = WebhookReadListSerializer
+
+
+class WebhookWriteSerializer(WriteOnceMixin, serializers.ModelSerializer):
+    events = EventKeysField(write_only=True)
+
+    project_id = serializers.IntegerField(write_only=True, allow_null=True, required=False)
+
+    def to_representation(self, instance):
+        serializer = WebhookReadSerializer(instance, context=self.context)
+        return serializer.data
+
+    class Meta:
+        model = Webhook
+        fields = (
+            "target_url",
+            "description",
+            "type",
+            "content_type",
+            "secret",
+            "is_active",
+            "enable_ssl",
+            "project_id",
+            "events",
+        )
+        write_once_fields = ("type", "project_id")
+        validators = [EventKeysValidator()]
+
+    def create(self, validated_data):
+        match validated_data["type"]:
+            case WebhookTypeChoice.PROJECT:
+                validated_data["organization"] = Project.objects.get(
+                    pk=validated_data["project_id"]
+                ).organization
+            case WebhookTypeChoice.SERVER:
+                validated_data["organization"] = None
+                validated_data["project_id"] = None
+
+        db_webhook = Webhook.objects.create(**validated_data)
+        return db_webhook
+
+
+@extend_schema_serializer(deprecate_fields=["changed_fields"])
+class WebhookDeliveryReadSerializer(serializers.ModelSerializer):
+    webhook_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = WebhookDelivery
+        fields = (
+            "id",
+            "webhook_id",
+            "event",
+            "status_code",
+            "redelivery",
+            "attempt",
+            "request_duration",
+            "created_date",
+            "updated_date",
+            "changed_fields",
+            "request",
+            "response",
+        )
+        read_only_fields = fields

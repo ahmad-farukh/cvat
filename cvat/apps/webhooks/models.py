@@ -1,0 +1,132 @@
+# Copyright (C) CVAT.ai Corporation
+#
+# SPDX-License-Identifier: MIT
+
+from __future__ import annotations
+
+from enum import Enum
+from functools import cached_property
+
+import attrs
+from django.conf import settings
+from django.db import models
+
+from cvat.apps.engine.models import Project, TimestampedModel
+from cvat.apps.organizations.models import Organization
+
+
+@attrs.define(frozen=True)
+class EventGroup:
+    display_name: str
+
+
+@attrs.define(frozen=True)
+class Event:
+    action: str
+    resource: str
+    group: EventGroup
+
+    @property
+    def key(self) -> str:
+        from cvat.apps.webhooks.event_type import event_key
+
+        return event_key(action=self.action, resource=self.resource)
+
+
+class WebhookTypeChoice(str, Enum):
+    ORGANIZATION = "organization"
+    PROJECT = "project"
+    SERVER = "server"
+
+    @classmethod
+    def choices(cls):
+        return tuple((x.value, x.name) for x in cls)
+
+    def __str__(self):
+        return self.value
+
+
+class WebhookContentTypeChoice(str, Enum):
+    JSON = "application/json"
+
+    @classmethod
+    def choices(cls):
+        return tuple((x.value, x.name) for x in cls)
+
+    def __str__(self):
+        return self.value
+
+
+class Webhook(TimestampedModel):
+    target_url = models.URLField(max_length=8192)
+    description = models.CharField(max_length=128, default="", blank=True)
+
+    events = models.CharField(max_length=4096, default="")
+    type = models.CharField(max_length=16, choices=WebhookTypeChoice.choices())
+    content_type = models.CharField(
+        max_length=64,
+        choices=WebhookContentTypeChoice.choices(),
+        default=WebhookContentTypeChoice.JSON,
+    )
+    secret = models.CharField(max_length=64, blank=True, default="")
+
+    is_active = models.BooleanField(default=True)
+    enable_ssl = models.BooleanField(default=True)
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    project = models.ForeignKey(Project, null=True, on_delete=models.CASCADE, related_name="+")
+    organization = models.ForeignKey(
+        Organization, null=True, on_delete=models.CASCADE, related_name="+"
+    )
+
+    deliveries: models.manager.RelatedManager[WebhookDelivery]
+
+    class Meta:
+        default_permissions = ()
+        constraints = [
+            models.CheckConstraint(
+                name="webhooks_project_or_organization_or_server",
+                condition=(
+                    models.Q(
+                        type=WebhookTypeChoice.PROJECT.value,
+                        project_id__isnull=False,
+                    )
+                    | models.Q(
+                        type=WebhookTypeChoice.ORGANIZATION.value,
+                        project_id__isnull=True,
+                        organization_id__isnull=False,
+                    )
+                    | models.Q(
+                        type=WebhookTypeChoice.SERVER.value,
+                        project_id__isnull=True,
+                        organization_id__isnull=True,
+                    )
+                ),
+            )
+        ]
+
+    @cached_property
+    def last_delivery(self) -> WebhookDelivery:
+        return self.deliveries.last
+
+
+class WebhookDelivery(TimestampedModel):
+    webhook = models.ForeignKey(Webhook, on_delete=models.CASCADE, related_name="deliveries")
+    event = models.CharField(max_length=64)
+
+    status_code = models.PositiveIntegerField(null=True, default=None)
+    redelivery = models.BooleanField(default=False)
+
+    attempt = models.PositiveIntegerField(null=True)
+    request_duration = models.PositiveIntegerField(null=True)
+
+    # deprecated, kept for historical deliveries
+    changed_fields = models.CharField(max_length=4096, default="")
+
+    request = models.JSONField(default=dict)
+    response = models.JSONField(default=dict)
+
+    class Meta:
+        default_permissions = ()

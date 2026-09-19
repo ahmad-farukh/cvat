@@ -1,0 +1,421 @@
+// Copyright (C) CVAT.ai Corporation
+//
+// SPDX-License-Identifier: MIT
+
+@import 'base';
+
+.cvat-quality-target-metric-dropdown {
+    .ant-select-item-group {
+        color: $validation-progress-color;
+        font-weight: 600;
+    }
+}
+
+.cvat-quality-control-inner {
+    @include cvat-management-page-inner;
+}
+
+.cvat-quality-settings-title {
+    margin-bottom: $grid-unit-size * 2;
+    align-items: center;
+
+    .cvat-quality-settings-tooltip-icon {
+        opacity: 0.5;
+    }
+}
+
+.cvat-quality-control-settings-tab {
+    @extend .cvat-scrollbar;
+
+    display: block;
+    height: 100%;
+    overflow-x: hidden;
+    position: relative;
+
+    .cvat-quality-settings-save-btn {
+        position: sticky;
+        z-index: 2;
+        top: $grid-unit-size;
+        height: 0;
+    }
+
+    .ant-divider-horizontal {
+        margin: $grid-unit-size 0;
+    }
+
+    .cvat-resource-page-filters {
+        position: relative;
+        width: 70%;
+
+        .cvat-switch-filters-constructor-button {
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    }
+
+    .cvat-quality-control-settings-header {
+        display: flex;
+        align-items: center;
+        min-height: $grid-unit-size * 4;
+        margin-bottom: $grid-unit-size * 2;
+
+        button[role='switch'] {
+            margin-right: $grid-unit-size;
+        }
+
+        .ant-alert-warning {
+            width: 90%;
+            display: flex;
+            justify-content: space-between;
+        }
+    }
+
+    .cvat-quality-settings-form-disabled {
+        label, span {
+            opacity: 0.5;
+        }
+    }
+
+    .cvat-quality-settings-form {
+        display: block;
+        position: relative;
+        height: calc(100vh - $grid-unit-size * 30);
+    }
+
+    .cvat-quality-requirements-table-actions {
+        display: flex;
+        justify-content: flex-start;
+        margin-left: $grid-unit-size * 2;
+    }
+
+    .cvat-quality-requirements-action-button {
+        color: $text-color;
+
+        &:hover, &:focus {
+            color: $text-color;
+        }
+    }
+
+    .cvat-quality-requirement-form {
+        padding-top: $grid-unit-size;
+
+        .ant-form-item {
+            margin-bottom: $grid-unit-size * 2;
+        }
+
+        .ant-checkbox-wrapper > .ant-checkbox + span {
+            padding-inline-end: calc($grid-unit-size / 2) !important;
+        }
+    }
+
+    .cvat-quality-requirement-form-header {
+        justify-content: space-between;
+        margin-bottom: $grid-unit-size * 2;
+    }
+
+    .cvat-quality-requirement-form-section-title {
+        align-items: center;
+        gap: $grid-unit-size;
+        margin-bottom: $grid-unit-size * 2;
+    }
+
+    .cvat-quality-requirement-form-short-input {
+        width: $grid-unit-size * 12;
+    }
+
+    .cvat-quality-requirement-checkbox-tooltip {
+        color: $text-color-secondary;
+    }
+
+    .ant-form-item .ant-form-item-label > label .ant-form-item-tooltip,
+    .cvat-quality-requirement-checkbox-tooltip,
+    .cvat-quality-settings-tooltip-icon {
+        cursor: default;
+    }
+
+    .ant-form-item .ant-form-item-label > label .ant-form-item-tooltip {
+        margin-inline-start: $grid-unit-size;
+    }
+
+    .cvat-quality-requirement-overridden-label {
+        color: $validation-progress-color;
+
+        span {
+            color: $validation-progress-color;
+        }
+
+        .ant-btn {
+            color: $validation-progress-color;
+            height: $grid-unit-size * 2;
+            padding: 0;
+        }
+    }
+
+    .cvat-quality-requirement-revert-button {
+        vertical-align: baseline;
+    }
+
+    .cvat-quality-requirement-overridden-attribute-rule
+        .cvat-quality-requirement-match-unspecified-label {
+        color: $validation-progress-color;
+    }
+
+    .cvat-quality-requirement-overridden-attribute-rule
+        .cvat-quality-requirement-revert-button {
+        color: $validation-progress-color;
+    }
+
+    .cvat-quality-requirement-filter-control {
+        display: flex;
+        align-items: center;
+        gap: $grid-unit-size;
+
+        .cvat-quality-requirement-filter-input {
+            flex: 1;
+        }
+    }
+
+    .cvat-quality-requirement-filter-input {
+        cursor: pointer;
+
+        input {
+            cursor: pointer;
+        }
+
+        .ant-input-suffix .ant-btn {
+            height: $grid-unit-size * 3;
+            width: $grid-unit-size * 3;
+        }
+    }
+
+    .cvat-table-wrapper:has(.cvat-quality-requirement-attribute-rules-table) {
+        @include cvat-table-dynamic-size;
+
+        padding-bottom: $grid-unit-size * 3;
+
+        .ant-form-item {
+            margin-bottom: 0;
+        }
+
+        .ant-table-tbody .ant-table-cell {
+            padding: calc($grid-unit-size / 2) $grid-unit-size !important;
+        }
+
+        .cvat-quality-requirement-attribute-rule-field {
+            max-width: $grid-unit-size * 52;
+        }
+
+        .cvat-quality-requirement-inherited-attribute-rule {
+            color: $text-color-secondary;
+
+            .ant-select-selection-item,
+            .ant-table-cell {
+                color: $text-color-secondary;
+            }
+        }
+
+        .cvat-quality-requirement-overridden-attribute-rule {
+            .ant-select-selection-item,
+            .ant-table-cell {
+                color: $validation-progress-color;
+            }
+        }
+
+        .cvat-quality-requirement-attribute-rule-threshold-row {
+            padding: $grid-unit-size 0;
+        }
+    }
+
+    .cvat-table-wrapper:has(.cvat-quality-requirements-configuration-table) {
+        @include cvat-table-dynamic-size;
+
+        padding-bottom: $grid-unit-size * 3;
+
+        .ant-table-tbody .ant-table-cell {
+            padding: calc($grid-unit-size / 2) $grid-unit-size !important;
+        }
+
+        .cvat-quality-requirements-disabled-row {
+            .ant-table-cell,
+            .ant-typography {
+                color: $text-color-secondary;
+            }
+        }
+    }
+}
+
+.cvat-quality-requirement-filter-builder {
+    width: 100%;
+
+    .query-builder-container {
+        margin-top: $grid-unit-size;
+    }
+
+    .cvat-quality-requirement-filter-recent-button {
+        align-self: flex-end;
+        display: inline-flex;
+        align-items: center;
+        gap: calc($grid-unit-size / 2);
+        padding-inline: $grid-unit-size ($grid-unit-size * 2);
+
+        .anticon {
+            flex: none;
+            display: flex;
+            line-height: 1;
+        }
+    }
+
+    .cvat-quality-requirement-filter-section {
+        width: 100%;
+        margin-top: $grid-unit-size;
+    }
+
+    .cvat-quality-requirement-filter-section-title {
+        align-self: flex-start;
+        margin-top: $grid-unit-size * 2;
+    }
+
+    .cvat-quality-requirement-filter-readonly-builder {
+        opacity: 0.65;
+        pointer-events: none;
+    }
+}
+
+.cvat-quality-requirement-filter-modal {
+    .ant-modal-body {
+        max-height: calc(100vh - $grid-unit-size * 28);
+        overflow: hidden auto;
+        padding: 0;
+    }
+
+    .cvat-quality-requirement-filter-builder {
+        align-items: stretch;
+        box-shadow: none;
+        border-radius: 0;
+        padding: $grid-unit-size * 2;
+    }
+}
+
+
+$excluded-background: #d9d9d973;
+
+.cvat-allocation-frame-row-excluded:not(.ant-table-row-selected) {
+    background-color: $excluded-background;
+
+
+   .ant-table-cell-row-hover {
+        background-color: $excluded-background !important;
+    }
+}
+
+.cvat-allocation-summary {
+    span {
+        font-size: 13px !important;
+    }
+}
+
+.cvat-clamped-text {
+    text-align: left;
+
+    span {
+        display: block;
+        word-wrap: break-word;
+        word-break: break-word;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        direction: rtl;
+    }
+}
+
+.cvat-open-frame-button {
+    @extend .cvat-clamped-text;
+}
+
+.cvat-quality-control-page, .cvat-quality-control-wrapper {
+    height: 100%;
+}
+
+.cvat-quality-control-page {
+    overflow: auto;
+}
+
+.cvat-quality-control-wrapper  {
+    .cvat-quality-control-inner-wrapper {
+        @include cvat-management-page-inner-wrapper;
+    }
+}
+
+.cvat-quality-control-loading, .cvat-quality-control-page-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.cvat-annotations-quality-allocation-table-summary {
+    margin-bottom: $grid-unit-size * 2;
+
+    .ant-statistic {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .ant-card-body {
+        padding: $grid-unit-size * 2 $grid-unit-size * 3;
+    }
+}
+
+.cvat-table-wrapper:has(.cvat-frame-allocation-table) {
+    @include cvat-table-dynamic-size;
+
+    margin-bottom: $grid-unit-size;
+
+    .ant-table-tbody .ant-table-cell {
+        padding: $grid-unit-size * 0.5 $grid-unit-size !important;
+    }
+}
+
+.cvat-quality-control-page-tabs {
+    @include cvat-management-page-tabs;
+
+    &:has(.ant-tabs-tabpane-active .cvat-quality-control-management-tab) {
+        overflow: visible;
+    }
+}
+
+.cvat-quality-control-management-tab-summary {
+    margin-left: - $grid-unit-size;
+    margin-right: - $grid-unit-size;
+
+    > .ant-col {
+        padding: 0 $grid-unit-size;
+    }
+}
+
+.cvat-quality-control-validation-mode-hint {
+    margin-bottom: $grid-unit-size * 2;
+}
+
+.cvat-quality-control-gt-job {
+    margin-bottom: $grid-unit-size * 2;
+}
+
+.cvat-quality-control-management-tab {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.cvat-quality-page-header {
+    @include cvat-management-page-header;
+}
+
+.cvat-quality-download-report-button {
+    padding-left: $grid-unit-size * 2;
+    padding-right: 0;
+}

@@ -1,0 +1,248 @@
+// Copyright (C) 2021-2022 Intel Corporation
+//
+// SPDX-License-Identifier: MIT
+
+/* doesn't work in hugo */
+/* stylelint-disable media-feature-range-notation */
+
+/* Code blocks */
+
+@import "product-tags";
+
+/* Unify alert box style site-wide (Note, Warning, etc.): compact padding
+   and normal body-text weight for all alerts, plus a small icon + label
+   heading instead of a large bold title, so it reads like a caption, not
+   a headline. Each alert type still gets its own accent color via
+   themes/docsy/assets/scss/_alerts.scss (border-color per $theme-colors);
+   here we only override the "Note" accent to match the site's orange
+   (see .td-toc a:hover below) and normalize the shared structure. */
+.alert {
+    padding: 0.5rem 1rem !important;
+    font-weight: 400 !important;
+    font-size: 0.95rem !important;
+}
+
+.alert-heading {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #666 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.35rem !important;
+
+    i {
+        margin-right: 4px;
+    }
+}
+
+.alert-primary {
+    border-color: #f97526 !important;
+}
+
+/* Heading self-link icon (assets/js/anchor.js): it's an <a> with no class
+   in the upstream theme, so it was inheriting the site's global
+   a:hover { text-decoration: underline } and showing a stray underline
+   under the leading space before the icon. */
+.td-heading-anchor-link,
+.td-heading-anchor-link:hover {
+    text-decoration: none !important;
+}
+
+div.code-toolbar .toolbar {
+    padding-right: 0.6em;
+    opacity: 1 !important;
+}
+
+pre[class*="language-"] {
+    background: #f8f9fa !important;
+}
+
+details {
+    max-width: 80%;
+}
+
+@media (max-width: 991px) {
+    details {
+        max-width: 100% !important;
+    }
+}
+
+li > details {
+    max-width: 100%;
+}
+
+.code-toolbar {
+    max-width: 80%;
+}
+
+.highlight > .code-toolbar,
+details > summary > .code-toolbar,
+details > .code-toolbar {
+    max-width: 100%;
+}
+
+.navbar-logo {
+    fill: white;
+}
+
+/* Increased left padding on the sidebar of documentation */
+/* stylelint-disable-next-line selector-class-pattern */
+.td-sidebar-nav__section .ul-1 ul {
+    padding-left: 0.6rem !important;
+    padding-right: 0.1rem !important;
+}
+
+/* Main documentation page */
+
+#docs section {
+    padding-top: 2rem;
+    padding-bottom: 7rem;
+}
+
+#docs .row div {
+    margin-top: 1rem;
+}
+
+/* Footer */
+
+.footer-disclaimer {
+    font-size: 0.83rem;
+    line-height: 1.25;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.container-fluid footer {
+    min-height: inherit;
+    padding-bottom: 0.5rem !important;
+    padding-top: 2rem !important;
+}
+
+/* About page */
+
+.logo-2 {
+    opacity: 0.8;
+}
+
+.history #year h2 {
+    text-shadow: 0 0 3px rgb(27, 27, 27);
+}
+
+/* Location block */
+
+.location {
+    width: 70%;
+}
+
+.marker-location i {
+    color: lightgray;
+}
+
+/* Display version menu on mobile version of the site */
+/* stylelint-disable-next-line selector-id-pattern */
+#dropdown_ver {
+    right: 5px !important;
+    left: auto;
+}
+
+@media (min-width: 991.98px) {
+    /* stylelint-disable-next-line selector-id-pattern */
+    #dropdown_ver {
+        right: 245px !important;
+        left: auto;
+    }
+}
+
+/* Hide breadcrumbs, when on the root level
+   https://github.com/google/docsy/issues/944
+*/
+/* stylelint-disable-next-line selector-class-pattern */
+.td-breadcrumbs__single { display: none !important;
+}
+
+/* --- Improve Table of Contents hierarchy --- */
+.td-toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Level 1 (H2) — main headings */
+  .td-toc > ul > li > a {
+    font-weight: 800;
+    font-size: 1rem;
+    color: #000 !important;
+    margin-top: 0.3rem;
+    display: block;
+    border-left: 2px solid transparent;
+    padding-left: 0.5rem;
+  }
+
+  /* Level 2 (H3) — subheadings */
+  .td-toc ul ul > li > a {
+    font-size: 1rem;
+    color: #222 !important;
+    margin-left: 1rem;
+    display: block;
+    border-left: 2px solid transparent;
+    padding-left: 0.5rem;
+  }
+
+  /* Hover and active states */
+  .td-toc a:hover,
+  .td-toc a:focus {
+    color: #f97526 !important;
+    text-decoration: underline;
+  }
+
+  /* Current section while scrolling (Bootstrap ScrollSpy, wired up in
+     layouts/partials/hooks/body-end.html). The transparent border above
+     reserves the space so highlighting a section doesn't shift the text. */
+  .td-toc a.active {
+    color: #f97526 !important;
+    border-left-color: #f97526;
+    text-decoration: none;
+  }
+
+/* 1. Remove arrows from the top level (ul-1) */
+.td-sidebar-nav .ul-1 > li > a.td-sidebar-link-section::after {
+    content: none !important;
+  }
+
+  /* 2. Add an arrow only to sections that:
+        - not in ul-1
+        - have embedded ul (with-child)
+  */
+  .td-sidebar-nav li.with-child:not(.ul-1 > li) > a.td-sidebar-link-section::after {
+    content: "▸";
+    font-size: 0.75rem;
+    margin-left: 6px;
+    opacity: 0.6;
+    display: inline-block;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+
+  /* 3. Turning the arrow on the active section */
+  .td-sidebar-nav li.with-child > a.td-sidebar-link-section.active::after {
+    transform: rotate(90deg);
+    opacity: 1;
+  }
+
+  /* Large indents between top-level sections */
+.td-sidebar-nav .ul-1 > li {
+    margin-bottom: 0.75rem;
+  }
+
+/* Hide only the root "Home" item in sidebar */
+a#m-docs {
+    display: none !important;
+  }
+
+  .td-sidebar-nav {
+    padding-top: 1.25rem;
+  }
+
+.td-content h2,
+.td-content h3 {
+  margin-top: 1.75rem !important;
+}
